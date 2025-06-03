@@ -30,9 +30,11 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks`)
       const data = await response.json()
-      setTasks(data)
+      const taskList = Array.isArray(data) ? data : data.tasks
+      setTasks(taskList || [])
     } catch (error) {
       console.error("Error fetching tasks:", error)
+      setTasks([]) // fallback to avoid `.filter` crash
     }
   }
 
