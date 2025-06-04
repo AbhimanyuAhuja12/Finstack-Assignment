@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import TaskList from "./components/TaskList"
 import NewTaskModal from "./components/NewTaskModal"
+import Navbar from "./components/Navbar"
 import { Plus, Search } from "lucide-react"
 
 const API_BASE_URL = "http://localhost:5000/api"
@@ -30,11 +31,10 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks`)
       const data = await response.json()
-      const taskList = Array.isArray(data) ? data : data.tasks
-      setTasks(taskList || [])
+      // Handle both direct array and paginated response
+      setTasks(data.tasks || data)
     } catch (error) {
       console.error("Error fetching tasks:", error)
-      setTasks([]) // fallback to avoid `.filter` crash
     }
   }
 
@@ -89,6 +89,38 @@ function App() {
     }
   }
 
+  const duplicateTask = async (task) => {
+    try {
+      const duplicatedTask = {
+        entity_name: `${task.entity_name} (Copy)`,
+        task_type: task.task_type,
+        time: task.time,
+        contact_person: task.contact_person,
+        note: task.note || "",
+        status: "Open",
+        priority: task.priority || "Medium",
+        date: new Date().toISOString().split("T")[0],
+        due_date: task.due_date || null,
+      }
+
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(duplicatedTask),
+      })
+
+      if (response.ok) {
+        fetchTasks()
+      } else {
+        console.error("Failed to duplicate task")
+      }
+    } catch (error) {
+      console.error("Error duplicating task:", error)
+    }
+  }
+
   const filteredAndSortedTasks = tasks
     .filter((task) => {
       const matchesSearch =
@@ -117,61 +149,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-teal-700 text-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <span className="text-teal-700 font-bold text-sm">PC</span>
-            </div>
-            <span className="text-lg font-semibold">PRIVATE CIRCLE</span>
-          </div>
-          <div className="flex items-center space-x-6">
-            <nav className="flex space-x-6">
-              <a href="#" className="hover:text-teal-200">
-                DASHBOARD
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                COMPANIES
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                FUNDS
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                HNI
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                MESSAGING
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                MEETINGS
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                NOTES
-              </a>
-              <a href="#" className="hover:text-teal-200">
-                DOCUMENTS
-              </a>
-            </nav>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm">Firstname Lastname</span>
-              <div className="w-8 h-8 bg-white rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
-      <div className="p-6">
+      <div className="p-3 md:p-6">
         <div className="bg-white rounded-lg shadow-sm">
           {/* Sales Log Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-xl font-semibold text-gray-800">SALES LOG</h1>
+          <div className="p-4 md:p-6 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <h1 className="text-lg md:text-xl font-semibold text-gray-800">SALES LOG</h1>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="flex items-center justify-center space-x-2 px-3 md:px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm md:text-base"
                 >
                   <Plus className="w-4 h-4" />
                   <span>New Task</span>
@@ -184,11 +174,13 @@ function App() {
                   placeholder="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 w-full md:w-auto text-sm md:text-base"
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-2">Use the "T" icon next to the table titles to apply filters</p>
+            <p className="text-xs md:text-sm text-gray-600 mt-2">
+              Use the "T" icon next to the table titles to apply filters
+            </p>
           </div>
 
           {/* Task List */}
@@ -196,6 +188,7 @@ function App() {
             tasks={filteredAndSortedTasks}
             onUpdateTask={updateTask}
             onDeleteTask={deleteTask}
+            onDuplicateTask={duplicateTask}
             filters={filters}
             setFilters={setFilters}
             sortConfig={sortConfig}
