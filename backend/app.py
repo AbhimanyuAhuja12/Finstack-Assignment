@@ -12,21 +12,17 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Initialize extensions
     db.init_app(app)
-    CORS(app)
+    
     CORS(app, origins=[
-        "http://localhost:5173",           
-        "http://localhost:3000",          
-        "https://finstack-assignment-pi.vercel.app"  
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://finstack-assignment-pi.vercel.app"
     ])
-    # Register blueprints
+    
     app.register_blueprint(task_bp, url_prefix='/api')
     
-    # Register error handlers
     register_error_handlers(app)
-    
-    # Setup logging
     if not app.debug and not app.testing:
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -39,11 +35,9 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info('Task Management API startup')
     
-    # Create tables
     with app.app_context():
         db.create_all()
         
-        # Add sample data if no tasks exist
         from models.task import Task
         if Task.query.count() == 0:
             from utils.sample_data import create_sample_data
@@ -54,4 +48,3 @@ def create_app(config_class=Config):
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True, host='0.0.0.0', port=5000)
-    
