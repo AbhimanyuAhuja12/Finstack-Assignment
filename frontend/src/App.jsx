@@ -6,7 +6,8 @@ import NewTaskModal from "./components/NewTaskModal"
 import Navbar from "./components/Navbar"
 import { Plus, Search } from "lucide-react"
 
-const API_BASE_URL = "http://localhost:5000/api"
+// const API_BASE_URL = "http://localhost:5000/api"
+const API_BASE_URL = "https://finstack-assignment-7dde.onrender.com/api"
 
 function App() {
   const [tasks, setTasks] = useState([])

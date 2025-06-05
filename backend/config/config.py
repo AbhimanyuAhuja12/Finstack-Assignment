@@ -16,14 +16,21 @@ class Config:
         f"{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Connection pool settings - CRITICAL for avoiding connection limit errors
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
-        'pool_recycle': 300,
+        'pool_size': 2,                   
+        'max_overflow': 1,                
+        'pool_recycle': 1800,              
+        'pool_pre_ping': True,             
+        'pool_timeout': 30,                
+        'pool_reset_on_return': 'commit', 
         'connect_args': {
             'charset': 'utf8mb4',
-            'connect_timeout': 60,
-            'read_timeout': 60,
-            'write_timeout': 60
+            'connect_timeout': 10,        
+            'read_timeout': 30,          
+            'write_timeout': 30,           
+            'autocommit': False,         
         }
     }
     
@@ -42,10 +49,26 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    
+    # Even more conservative settings for development
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        **Config.SQLALCHEMY_ENGINE_OPTIONS,
+        'pool_size': 1,           
+        'max_overflow': 1,        
+        'echo_pool': True,        
+    }
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
+    
+    # Production optimized settings
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        **Config.SQLALCHEMY_ENGINE_OPTIONS,
+        'pool_size': 3,           
+        'max_overflow': 2,        
+        'pool_recycle': 3600,     
+    }
 
 class TestingConfig(Config):
     TESTING = True
@@ -54,6 +77,13 @@ class TestingConfig(Config):
         f"mysql+pymysql://{Config.MYSQL_USER}:{Config.MYSQL_PASSWORD}@"
         f"{Config.MYSQL_HOST}:{Config.MYSQL_PORT}/{MYSQL_DATABASE}"
     )
+    
+    # Minimal connections for testing
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        **Config.SQLALCHEMY_ENGINE_OPTIONS,
+        'pool_size': 1,
+        'max_overflow': 0,
+    }
 
 config = {
     'development': DevelopmentConfig,
