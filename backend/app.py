@@ -15,7 +15,11 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     CORS(app)
-    CORS(app, origins=["http://localhost:5173"])
+    CORS(app, origins=[
+        "http://localhost:5173",           
+        "http://localhost:3000",          
+        "https://finstack-assignment-pi.vercel.app"  
+    ])
     # Register blueprints
     app.register_blueprint(task_bp, url_prefix='/api')
     
